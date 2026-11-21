@@ -496,18 +496,58 @@ TAG_BG = {"CONFIRMED": (16, 122, 80), "REPORTED": (176, 124, 12),
 # --- 3D icons (each returns an RGBA layer) ----------------------------------
 def icon_cop31(s):
     lay = Image.new("RGBA", (s, s), (0, 0, 0, 0))
-    g = sphere(int(s * 0.62), (38, 110, 90))
-    lay.alpha_composite(g, (int(s * 0.06), int(s * 0.10)))
+    g = sphere(int(s * 0.50), (38, 110, 90))
+    lay.alpha_composite(g, (int(s * 0.02), int(s * 0.06)))
     d = ImageDraw.Draw(lay)
-    # red thermometer: 3D stem + bulb
-    d.rounded_rectangle([int(s * 0.72), int(s * 0.08), int(s * 0.86), int(s * 0.72)],
-                        radius=int(s * 0.07), fill=(200, 40, 30, 255))
-    d.rounded_rectangle([int(s * 0.72), int(s * 0.08), int(s * 0.79), int(s * 0.72)],
-                        radius=int(s * 0.04), fill=(255, 110, 90, 255))
-    d.ellipse([int(s * 0.66), int(s * 0.66), int(s * 0.92), int(s * 0.92)],
-              fill=(220, 50, 38, 255))
-    d.ellipse([int(s * 0.70), int(s * 0.70), int(s * 0.82), int(s * 0.82)],
-              fill=(255, 120, 100, 255))
+    # three summit flags on poles behind the desk
+    for (fx, col) in [(0.52, (60, 110, 220)), (0.68, (40, 160, 90)), (0.84, (220, 60, 50))]:
+        px = int(s * fx)
+        d.line([(px, int(s * 0.34)), (px, int(s * 0.68))], fill=(200, 200, 200, 255), width=2)
+        d.polygon([(px, int(s * 0.34)), (px + int(s * 0.13), int(s * 0.38)),
+                   (px, int(s * 0.42))], fill=col + (255,))
+    # negotiation desk: 3D tabletop + legs
+    d.rounded_rectangle([int(s * 0.42), int(s * 0.66), int(s * 0.98), int(s * 0.76)],
+                        radius=int(s * 0.03), fill=(70, 55, 40, 255))
+    d.rounded_rectangle([int(s * 0.42), int(s * 0.66), int(s * 0.98), int(s * 0.70)],
+                        radius=int(s * 0.03), fill=(140, 105, 70, 255))
+    d.rectangle([int(s * 0.48), int(s * 0.76), int(s * 0.54), int(s * 0.94)],
+                fill=(50, 38, 28, 255))
+    d.rectangle([int(s * 0.88), int(s * 0.76), int(s * 0.94), int(s * 0.94)],
+                fill=(50, 38, 28, 255))
+    # draft document on the desk
+    d.polygon([(int(s * 0.56), int(s * 0.58)), (int(s * 0.76), int(s * 0.58)),
+               (int(s * 0.80), int(s * 0.66)), (int(s * 0.60), int(s * 0.66))],
+              fill=(240, 240, 235, 255))
+    for k in range(3):
+        yy = int(s * (0.595 + k * 0.02))
+        d.line([(int(s * 0.60), yy), (int(s * 0.76), yy)], fill=(120, 120, 120, 255), width=1)
+    return lay
+
+
+def _rocket(s):
+    """One small rocket pointing up, on its own layer (rotated by the caller)."""
+    w, h = int(s * 0.20), int(s * 0.52)
+    lay = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    d = ImageDraw.Draw(lay)
+    # flame
+    d.polygon([(w // 2 - 3, h - 14), (w // 2 + 3, h - 14), (w // 2, h)],
+              fill=(255, 140, 40, 255))
+    d.polygon([(w // 2 - 1, h - 12), (w // 2 + 1, h - 12), (w // 2, h - 4)],
+              fill=(255, 230, 120, 255))
+    # fins
+    d.polygon([(2, h - 22), (w // 2 - 2, h - 18), (w // 2 - 2, h - 10)],
+              fill=(180, 40, 30, 255))
+    d.polygon([(w - 2, h - 22), (w // 2 + 2, h - 18), (w // 2 + 2, h - 10)],
+              fill=(180, 40, 30, 255))
+    # body: glossy capsule
+    d.rounded_rectangle([w // 2 - 4, 10, w // 2 + 4, h - 12],
+                        radius=4, fill=(225, 230, 240, 255))
+    d.rounded_rectangle([w // 2 - 4, 10, w // 2, h - 12],
+                        radius=4, fill=(255, 255, 255, 255))
+    # nose cone + window
+    d.polygon([(w // 2 - 4, 12), (w // 2 + 4, 12), (w // 2, 0)],
+              fill=(200, 40, 30, 255))
+    d.ellipse([w // 2 - 2, 16, w // 2 + 2, 20], fill=(40, 90, 160, 255))
     return lay
 
 
@@ -515,19 +555,27 @@ def icon_missiles(s):
     lay = Image.new("RGBA", (s, s), (0, 0, 0, 0))
     d = ImageDraw.Draw(lay)
     d.ellipse([2, 2, s - 3, s - 3], fill=(12, 20, 48, 255))
-    # glowing interceptor arcs
-    for (box, a0, a1, col, wd) in [([6, 10, s - 6, s - 6], 200, 330, (255, 200, 80), 4),
-                                   ([14, 18, s - 14, s - 10], 210, 320, (255, 240, 170), 3),
-                                   ([22, 26, s - 22, s - 18], 220, 310, (255, 255, 255), 2)]:
-        d.arc(box, start=a0, end=a1, fill=col + (255,), width=wd)
-    # burst where they meet
-    burst = radial_glow(int(s * 0.4), (255, 220, 120), 230, 0)
-    lay.alpha_composite(burst, (int(s * 0.62), int(s * 0.30)))
-    # shield dome at the bottom
-    d.pieslice([int(s * 0.22), int(s * 0.62), int(s * 0.78), int(s * 1.02)],
-               start=180, end=360, fill=(70, 130, 220, 255))
-    d.pieslice([int(s * 0.22), int(s * 0.62), int(s * 0.50), int(s * 1.02)],
-               start=180, end=360, fill=(130, 180, 255, 255))
+    # stars
+    for (sx, sy) in [(0.15, 0.12), (0.85, 0.15), (0.30, 0.08), (0.70, 0.06)]:
+        d.ellipse([int(s * sx) - 1, int(s * sy) - 1, int(s * sx) + 1, int(s * sy) + 1],
+                  fill=(255, 255, 255, 200))
+    # three rockets streaking down over the city (nose down-left), spread apart
+    for (px, py, ang) in [(0.20, 0.06, 115), (0.52, 0.00, 140), (0.84, 0.16, 165)]:
+        rk = _rocket(s).rotate(ang, expand=True, resample=Image.BICUBIC)
+        lay.alpha_composite(rk, (int(s * px) - rk.width // 2, int(s * py)))
+    # interception bursts, kept clear of the rocket bodies
+    for (bx, by) in [(0.38, 0.52), (0.68, 0.60)]:
+        burst = radial_glow(int(s * 0.30), (255, 200, 90), 230, 0)
+        lay.alpha_composite(burst, (int(s * bx) - int(s * 0.15), int(s * by) - int(s * 0.15)))
+    d = ImageDraw.Draw(lay)
+    # city skyline silhouette along the bottom
+    for (bx, bw, bh) in [(0.04, 0.18, 0.20), (0.26, 0.14, 0.28), (0.44, 0.20, 0.16),
+                          (0.68, 0.16, 0.24), (0.86, 0.12, 0.18)]:
+        d.rectangle([int(s * bx), int(s * (0.98 - bh)), int(s * (bx + bw)), s - 2],
+                    fill=(8, 12, 28, 255))
+        d.rectangle([int(s * bx) + 2, int(s * (0.98 - bh)) + 3,
+                     int(s * (bx + bw)) - 2, int(s * (0.98 - bh)) + 5],
+                    fill=(255, 210, 110, 220))
     return lay
 
 
@@ -588,23 +636,41 @@ def icon_kyiv(s):
 def icon_quake(s):
     lay = Image.new("RGBA", (s, s), (0, 0, 0, 0))
     d = ImageDraw.Draw(lay)
-    # cracked ground slab: 3D box
-    d.polygon([(int(s * 0.08), int(s * 0.62)), (int(s * 0.92), int(s * 0.62)),
-               (int(s * 0.82), int(s * 0.90)), (int(s * 0.18), int(s * 0.90))],
+    d.ellipse([2, 2, s - 3, s - 3], fill=(14, 18, 44, 255))
+    # two buildings shaken off vertical: drawn on layers, then tilted
+    for (bx, bw, bh, tilt, col) in [(0.10, 0.26, 0.44, -12, (52, 72, 120)),
+                                     (0.58, 0.28, 0.52, 11, (40, 58, 100))]:
+        bw_px, bh_px = int(s * bw), int(s * bh)
+        b = Image.new("RGBA", (bw_px + 8, bh_px + 8), (0, 0, 0, 0))
+        bd = ImageDraw.Draw(b)
+        bd.rectangle([4, 4, 4 + bw_px, 4 + bh_px], fill=col + (255,))
+        bd.rectangle([4, 4, 4 + bw_px // 2, 4 + bh_px], fill=lerp(col, (255, 255, 255), 0.25) + (255,))
+        for wy in range(10, bh_px - 2, 10):
+            for wx in range(8, bw_px - 2, 9):
+                if (wx + wy) % 3 == 0:
+                    bd.rectangle([wx, wy, wx + 3, wy + 4], fill=(255, 210, 110, 255))
+        b = b.rotate(tilt, expand=True, resample=Image.BICUBIC)
+        lay.alpha_composite(b, (int(s * bx) - 4, int(s * (0.62 - bh)) - 4))
+    d = ImageDraw.Draw(lay)
+    # cracked ground slab
+    d.polygon([(int(s * 0.04), int(s * 0.64)), (int(s * 0.96), int(s * 0.64)),
+               (int(s * 0.86), int(s * 0.94)), (int(s * 0.14), int(s * 0.94))],
               fill=(120, 95, 60, 255))
-    d.polygon([(int(s * 0.08), int(s * 0.62)), (int(s * 0.92), int(s * 0.62)),
-               (int(s * 0.88), int(s * 0.70)), (int(s * 0.12), int(s * 0.70))],
+    d.polygon([(int(s * 0.04), int(s * 0.64)), (int(s * 0.96), int(s * 0.64)),
+               (int(s * 0.90), int(s * 0.72)), (int(s * 0.10), int(s * 0.72))],
               fill=(170, 140, 90, 255))
-    # crack lines
-    d.line([(int(s * 0.30), int(s * 0.64)), (int(s * 0.42), int(s * 0.74)),
-            (int(s * 0.38), int(s * 0.84))], fill=(60, 45, 25, 255), width=2)
-    d.line([(int(s * 0.65), int(s * 0.64)), (int(s * 0.58), int(s * 0.76)),
-            (int(s * 0.66), int(s * 0.86))], fill=(60, 45, 25, 255), width=2)
-    # shockwave rings rising from the slab
-    for i, (ry, rx, a) in enumerate([(0.52, 0.30, 220), (0.40, 0.38, 170),
-                                     (0.28, 0.46, 120), (0.16, 0.54, 80)]):
-        d.ellipse([int(s * (0.5 - rx)), int(s * ry), int(s * (0.5 + rx)),
-                   int(s * (ry + 0.10))], outline=(255, 120, 60, a), width=3)
+    # jagged glowing crack down the middle of the slab
+    crack = [(0.50, 0.64), (0.44, 0.72), (0.54, 0.80), (0.46, 0.88), (0.52, 0.94)]
+    pts = [(int(s * cx), int(s * cy)) for (cx, cy) in crack]
+    d.line(pts, fill=(255, 120, 40, 255), width=5)
+    d.line(pts, fill=(40, 25, 12, 255), width=2)
+    # side crack
+    d.line([(int(s * 0.22), int(s * 0.66)), (int(s * 0.30), int(s * 0.76)),
+            (int(s * 0.26), int(s * 0.86))], fill=(60, 45, 25, 255), width=2)
+    # debris kicked up
+    for (dx, dy, r) in [(0.30, 0.56, 2), (0.68, 0.52, 2), (0.82, 0.60, 1), (0.18, 0.58, 1)]:
+        d.ellipse([int(s * dx) - r, int(s * dy) - r, int(s * dx) + r, int(s * dy) + r],
+                  fill=(200, 170, 120, 255))
     return lay
 
 
@@ -672,19 +738,44 @@ def icon_mercury(s):
 
 def icon_aid(s):
     lay = Image.new("RGBA", (s, s), (0, 0, 0, 0))
-    g = sphere(int(s * 0.88), (225, 228, 235))
-    lay.alpha_composite(g, (int(s * 0.06), int(s * 0.06)))
     d = ImageDraw.Draw(lay)
-    # red cross, slightly embossed
-    cx, cy, w = s // 2, s // 2, int(s * 0.13)
-    d.rectangle([cx - w, cy - int(s * 0.26), cx + w, cy + int(s * 0.26)],
-                fill=(200, 30, 25, 255))
-    d.rectangle([cx - int(s * 0.26), cy - w, cx + int(s * 0.26), cy + w],
-                fill=(200, 30, 25, 255))
-    d.rectangle([cx - w, cy - int(s * 0.26), cx - w // 2, cy + int(s * 0.26)],
-                fill=(255, 90, 80, 255))
-    d.rectangle([cx - int(s * 0.26), cy - w, cx + int(s * 0.26), cy - w // 2],
-                fill=(255, 90, 80, 255))
+    d.ellipse([2, 2, s - 3, s - 3], fill=(12, 18, 44, 255))
+    # street at the bottom
+    d.rectangle([2, int(s * 0.86), s - 2, s - 2], fill=(30, 32, 44, 255))
+    d.line([(4, int(s * 0.92)), (s - 4, int(s * 0.92))], fill=(220, 200, 90, 200), width=1)
+    # delivery van: 3D box body + cab + wheels
+    d.rounded_rectangle([int(s * 0.08), int(s * 0.58), int(s * 0.92), int(s * 0.86)],
+                        radius=int(s * 0.04), fill=(225, 228, 235, 255))
+    d.rounded_rectangle([int(s * 0.08), int(s * 0.58), int(s * 0.92), int(s * 0.64)],
+                        radius=int(s * 0.03), fill=(255, 255, 255, 255))
+    # cab window + side stripe
+    d.polygon([(int(s * 0.72), int(s * 0.62)), (int(s * 0.90), int(s * 0.62)),
+               (int(s * 0.90), int(s * 0.72)), (int(s * 0.72), int(s * 0.72))],
+              fill=(50, 100, 160, 255))
+    d.rectangle([int(s * 0.10), int(s * 0.74), int(s * 0.90), int(s * 0.78)],
+                fill=(200, 60, 50, 255))
+    for wx in [0.24, 0.70]:
+        d.ellipse([int(s * wx) - 5, int(s * 0.84) - 5, int(s * wx) + 5, int(s * 0.84) + 5],
+                  fill=(15, 15, 20, 255))
+        d.ellipse([int(s * wx) - 2, int(s * 0.84) - 2, int(s * wx) + 2, int(s * 0.84) + 2],
+                  fill=(180, 180, 190, 255))
+    # drone above: dark quadcopter silhouette
+    cx, cy = int(s * 0.58), int(s * 0.24)
+    d.ellipse([cx - 7, cy - 4, cx + 7, cy + 4], fill=(20, 22, 30, 255))
+    for (rx, ry) in [(cx - 14, cy - 6), (cx + 14, cy - 6), (cx - 14, cy + 6), (cx + 14, cy + 6)]:
+        d.line([(cx, cy), (rx, ry)], fill=(20, 22, 30, 255), width=2)
+        d.ellipse([rx - 6, ry - 2, rx + 6, ry + 2], fill=(160, 170, 190, 140))
+    d.ellipse([cx - 2, cy - 2, cx + 2, cy + 2], fill=(255, 60, 50, 255))
+    # blast flash at the van's rear roof + sparks
+    blast = radial_glow(int(s * 0.4), (255, 170, 60), 240, 0)
+    lay.alpha_composite(blast, (int(s * 0.66), int(s * 0.42)))
+    d = ImageDraw.Draw(lay)
+    d.ellipse([int(s * 0.80), int(s * 0.50), int(s * 0.88), int(s * 0.58)],
+              fill=(255, 230, 150, 255))
+    for (x0, y0, x1, y1) in [(0.80, 0.54, 0.70, 0.48), (0.84, 0.54, 0.92, 0.44),
+                             (0.84, 0.58, 0.94, 0.62), (0.80, 0.58, 0.72, 0.64)]:
+        d.line([(int(s * x0), int(s * y0)), (int(s * x1), int(s * y1))],
+               fill=(255, 200, 90, 255), width=2)
     return lay
 
 
