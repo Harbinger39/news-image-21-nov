@@ -1,4 +1,4 @@
-// Entry program for the make.fun news-image-20261121 bounty (v2).
+// Entry program for the make.fun news-image-20261121 bounty (v3, final rebuild).
 // Node 22, standard library only. Copies the committed entry.png to the
 // output directory the grader provides, so both runs write identical bytes.
 import { copyFileSync, mkdirSync } from "node:fs";
